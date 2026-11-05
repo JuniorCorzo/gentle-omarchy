@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Omarchy Linux](https://img.shields.io/badge/Omarchy-Hyprland-blueviolet)](https://omarchy.org)
 
-> Real-time dynamic [Omarchy](https://omarchy.org/) desktop theme synchronization for **Gentle Shell** and **Pi Coding Agent**.
+> Real-time dynamic [Omarchy](https://omarchy.org/) desktop theme synchronization for **Gentle Shell**.
 
 When you switch themes in Omarchy (`omarchy theme set`), **`gentle-omarchy`** detects the palette transition and re-themes Gentle Shell live on your screen without restarting your session, without breaking terminal borders, and without layout shifts.
 
@@ -34,28 +34,28 @@ By default, Gentle Shell ships with curated static themes (like `Gentleman-Cute`
 
 ## Installation
 
-### With Pi / Gentle Shell Package Manager
+### With Gentle Shell Package Manager
 
 From GitHub:
 ```bash
-pi install git:github.com/juniorcorzo/gentle-omarchy
+gentle-shell install git:github.com/juniorcorzo/gentle-omarchy
 ```
 
 From local directory (for development or manual clone):
 ```bash
-pi install /path/to/gentle-omarchy
+gentle-shell install /path/to/gentle-omarchy
 ```
 
 Once published on npm:
 ```bash
-pi install npm:gentle-omarchy
+gentle-shell install npm:gentle-omarchy
 ```
 
 ---
 
 ## Setup & Activation
 
-Ensure your `~/.gentle-shell/agent/settings.json` (or `~/.pi/agent/settings.json`) specifies:
+Ensure your `~/.gentle-shell/agent/settings.json` specifies:
 
 ```json
 {
@@ -112,7 +112,7 @@ Or switch to it interactively by pressing `/gentle:customize` and selecting **`o
                               │
                               ▼
 ┌───────────────────────────────────────────────┐
-│ Gentle Shell / Pi Theme Engine                │
+│ Gentle Shell Theme Engine                     │
 │ (Atomic redraw of borders, text & badges)     │
 └───────────────────────────────────────────────┘
 ```
