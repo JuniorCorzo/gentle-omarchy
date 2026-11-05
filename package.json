@@ -1,0 +1,27 @@
+{
+  "name": "gentle-omarchy",
+  "version": "1.0.0",
+  "description": "Seamless real-time Omarchy desktop theme synchronization for Gentle Shell and Pi",
+  "main": "extensions/index.ts",
+  "keywords": [
+    "pi-package",
+    "gentle-shell",
+    "omarchy",
+    "theme",
+    "hyprland"
+  ],
+  "author": "Junior Corzo",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./extensions/index.ts"
+    ],
+    "themes": [
+      "./themes/omarchy-system.json"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  }
+}
