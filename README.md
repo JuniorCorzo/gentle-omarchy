@@ -2,49 +2,60 @@
 
 [![pi-package](https://img.shields.io/badge/pi--package-verified-brightgreen)](https://pi.dev/packages)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Omarchy Linux](https://img.shields.io/badge/Omarchy-Hyprland-blueviolet)](https://omarchy.org)
 
-> Real-time dynamic Omarchy desktop theme synchronization for **Gentle Shell** and **Pi Coding Agent**.
+> Real-time dynamic [Omarchy](https://omarchy.org/) desktop theme synchronization for **Gentle Shell** and **Pi Coding Agent**.
 
-When you change themes on your [Omarchy](https://omarchy.org/) Hyprland desktop (via `omarchy theme set`), **gentle-omarchy** automatically detects the palette change and applies it live to Gentle Shell in real time — with zero restarts, zero broken borders, and full harmony with your desktop environment.
+When you switch themes in Omarchy (`omarchy theme set`), **`gentle-omarchy`** detects the palette transition and re-themes Gentle Shell live on your screen without restarting your session, without breaking terminal borders, and without layout shifts.
 
 ---
 
-## Features
+## The Problem It Solves
 
-- **Live Synchronization**: Switch themes in Omarchy (`omarchy theme set "Catppuccin"` or `"Tokyo Night"`), and Gentle Shell immediately updates its terminal colors.
-- **Support for Custom Themes**: Works out of the box with stock themes as well as any custom theme created in `~/.config/omarchy/themes/`.
-- **Dual Reactivity**:
-  1. **File Watcher (`inotify`)**: Watches `~/.local/state/omarchy/current/theme/pi.json` for instant in-session updates.
-  2. **Automation Hook**: Auto-installs `~/.config/omarchy/hooks/theme-set.d/gentle-shell` to ensure system-level persistence.
-- **Gentle Shell / Gentleman Friendly**: Respects Gentle Shell's frame rules, floating prompt layout, status indicators, and Vim mode badges without causing layout shifts.
+Omarchy themes are completely custom: every theme defines its own `colors.toml` (accent colors, background shades, borders, status highlights, terminal palette). 
+
+By default, Gentle Shell ships with curated static themes (like `Gentleman-Cute`). If you change your desktop theme in Omarchy (e.g. from *Tokyo Night* to *Catppuccin* or a custom community theme), your terminal emulator and desktop windows change color, but the agent's TUI remains stuck in its previous palette.
+
+**`gentle-omarchy`** bridges this gap. It turns Gentle Shell into a reactive citizen of your Omarchy desktop environment.
+
+---
+
+## Key Features
+
+- **Live In-Session Reactivity**: Change themes via `omarchy theme set "Catppuccin"` or `omarchy theme set "Tokyo Night"` — Gentle Shell repaints its colors dynamically while you are typing.
+- **100% Custom Theme Support**: Works seamlessly with Omarchy stock themes (`/usr/share/omarchy/themes/`) as well as user-authored custom themes (`~/.config/omarchy/themes/`).
+- **Dual Reactivity Pipeline**:
+  1. **In-Process Watcher (`inotify` / `fs.watch`)**: Watches the active Omarchy theme state file (`~/.local/state/omarchy/current/theme/pi.json`) for sub-second hot-reloads.
+  2. **Automated System Hook**: Auto-provisions `~/.config/omarchy/hooks/theme-set.d/gentle-shell` so system-wide theme events persist across reboots and new sessions.
+- **Gentleman Frame & TUI Harmony**: Fully compatible with Gentle Shell's floating prompt layout, panel buttons, bottom shell bar, and modal Vim editing badges.
+- **Zero Configuration**: Starts working immediately upon installation with intelligent fallbacks.
 
 ---
 
 ## Installation
 
-### From local checkout
+### With Pi / Gentle Shell Package Manager
 
-```bash
-pi install /path/to/gentle-omarchy
-```
-
-### From Git (once pushed to GitHub)
-
+From GitHub:
 ```bash
 pi install git:github.com/juniorcorzo/gentle-omarchy
 ```
 
-### From npm (once published)
+From local directory (for development or manual clone):
+```bash
+pi install /path/to/gentle-omarchy
+```
 
+Once published on npm:
 ```bash
 pi install npm:gentle-omarchy
 ```
 
 ---
 
-## Configuration
+## Setup & Activation
 
-In your `~/.gentle-shell/agent/settings.json` (or `~/.pi/agent/settings.json`), set:
+Ensure your `~/.gentle-shell/agent/settings.json` (or `~/.pi/agent/settings.json`) specifies:
 
 ```json
 {
@@ -52,28 +63,81 @@ In your `~/.gentle-shell/agent/settings.json` (or `~/.pi/agent/settings.json`), 
 }
 ```
 
-Or select **`omarchy-system`** interactively from `/gentle:customize` under the **Themes** tab.
+Or switch to it interactively by pressing `/gentle:customize` and selecting **`omarchy-system`** in the **Themes** tab.
 
 ---
 
-## Commands
+## Interactive Slash Commands
 
 | Command | Description |
 |---|---|
-| `/omarchy:sync` | Forces an immediate re-read and re-application of the current Omarchy theme. |
-| `/omarchy:status` | Shows the active desktop theme, hook status, and file watcher health. |
+| `/omarchy:sync` | Forces an immediate re-read of the desktop theme and applies it to the active TUI. |
+| `/omarchy:status` | Displays the current desktop theme name, hook state, and file watcher health. |
 | `/omarchy:hook` | Re-installs or repairs the `theme-set.d` hook in `~/.config/omarchy/hooks/`. |
 
 ---
 
-## How It Works
+## How It Works (Architecture)
 
-1. **Omarchy Compilation**: Omarchy generates `~/.local/state/omarchy/current/theme/pi.json` from `colors.toml` using its built-in `pi.json.tpl` template.
-2. **Dynamic Sync**: `gentle-omarchy` mirrors this palette to `~/.gentle-shell/agent/themes/omarchy-system.json`.
-3. **Hot-Reload**: Pi's `themeWatcher` detects the change and triggers an atomic redraw of all UI components and prompt frames.
+```text
+┌────────────────────────┐
+│  omarchy theme set     │  (User switches desktop theme)
+└───────────┬────────────┘
+            │
+            ▼
+┌────────────────────────┐
+│ Omarchy Template Engine│  (Compiles colors.toml with pi.json.tpl)
+└───────────┬────────────┘
+            │ Writes
+            ▼
+┌───────────────────────────────────────────────┐
+│ ~/.local/state/omarchy/current/theme/pi.json  │
+└───────────┬───────────────────────────────────┘
+            │
+      ┌─────┴────────────────────────┐
+      │                              │
+      ▼ (Live Session)               ▼ (System Hook)
+┌──────────────────────────┐   ┌──────────────────────────────────────────┐
+│ gentle-omarchy Watcher   │   │ ~/.config/omarchy/hooks/theme-set.d/     │
+│ (fs.watch / inotify)     │   │ gentle-shell sync script                 │
+└───────────┬──────────────┘   └──────────────────┬───────────────────────┘
+            │                                     │
+            └─────────────────┬───────────────────┘
+                              │
+                              ▼ Updates
+┌───────────────────────────────────────────────┐
+│ ~/.gentle-shell/agent/themes/                 │
+│                 omarchy-system.json           │
+└─────────────────────────────┬─────────────────┘
+                              │
+                              ▼
+┌───────────────────────────────────────────────┐
+│ Gentle Shell / Pi Theme Engine                │
+│ (Atomic redraw of borders, text & badges)     │
+└───────────────────────────────────────────────┘
+```
+
+1. **Omarchy Theme Compilation**: Omarchy evaluates the active theme's `colors.toml` and renders `pi.json` inside `~/.local/state/omarchy/current/theme/`.
+2. **Event & File Synchronization**: `gentle-omarchy` captures this event via an in-memory debounced file watcher and the system `theme-set.d` automation hook.
+3. **Atomic Theme Re-application**: The plugin writes the updated JSON into Gentle Shell's themes directory and calls `ctx.ui.setTheme("omarchy-system")` to refresh the TUI canvas.
+
+---
+
+## Troubleshooting
+
+### Theme didn't update after `omarchy theme set`
+1. Run `/omarchy:status` to verify that the watcher and hook are active.
+2. Run `/omarchy:sync` to manually force a sync.
+3. Verify that your Omarchy theme contains valid color definitions by checking `omarchy theme current`.
+
+---
+
+## Contributing
+
+Contributions, bug reports, and suggestions are welcome! Feel free to open an issue or submit a pull request on GitHub.
 
 ---
 
 ## License
 
-MIT © [Junior Corzo](https://github.com/juniorcorzo)
+[MIT License](LICENSE) © 2026 [Junior Corzo](https://github.com/juniorcorzo)
