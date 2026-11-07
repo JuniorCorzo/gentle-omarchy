@@ -4,10 +4,11 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, watch as fsWatch, type FSWatcher } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-const OMARCHY_STATE_THEME = join(homedir(), ".local", "state", "omarchy", "current", "theme", "pi.json");
+const OMARCHY_CURRENT_DIR = join(homedir(), ".local", "state", "omarchy", "current");
+const OMARCHY_STATE_THEME = join(OMARCHY_CURRENT_DIR, "theme", "pi.json");
 const OMARCHY_THEME_NAME_FILE = join(homedir(), ".local", "state", "omarchy", "current", "theme.name");
 const OMARCHY_HOOKS_DIR = join(homedir(), ".config", "omarchy", "hooks", "theme-set.d");
 const OMARCHY_HOOK_SCRIPT = join(OMARCHY_HOOKS_DIR, "gentle-shell");
@@ -106,11 +107,15 @@ export default function (pi: ExtensionAPI) {
 			activeWatcher = null;
 		}
 
-		const watchDir = dirname(OMARCHY_STATE_THEME);
-		if (!existsSync(watchDir)) return;
+		// Omarchy rebuilds `current/theme` on every switch (`rm -rf` followed by a
+		// `mv` from the staging dir). An inotify watch is bound to the inode, so
+		// watching that directory dies with it after the first switch and no
+		// further events are delivered. `current/` itself is stable, so watch it
+		// and filter for the theme entries instead.
+		if (!existsSync(OMARCHY_CURRENT_DIR)) return;
 
 		try {
-			activeWatcher = fsWatch(watchDir, (_event, filename) => {
+			activeWatcher = fsWatch(OMARCHY_CURRENT_DIR, (_event, filename) => {
 				if (filename && !filename.includes("pi.json") && !filename.includes("theme")) {
 					return;
 				}
